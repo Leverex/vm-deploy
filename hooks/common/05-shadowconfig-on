@@ -1,0 +1,43 @@
+#!/bin/sh
+#
+#  This script enforces the use of a shadow password file.
+#
+# Steve
+# --
+# https://steve.fi/
+
+
+prefix=$1
+
+
+#
+#  Source our common functions
+#
+
+if [ -e /usr/share/vm-deploy/common.sh ]; then
+    . /usr/share/vm-deploy/common.sh
+else
+    . "${HOOK_DIR}/common.sh"
+fi
+
+
+#
+# Log our start
+#
+log_msg info "Script $0 starting"
+
+
+#
+# Enable the shadow passwords if the command is found.
+#
+if [ -x ${prefix}/sbin/shadowconfig ]; then
+   chroot ${prefix} /sbin/shadowconfig on
+else
+   log_msg info "/sbin/shadowconfig not found.  skipping."
+fi
+
+
+#
+# Log our finish
+#
+log_msg info "Script $0 finished."

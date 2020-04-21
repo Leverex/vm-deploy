@@ -1,0 +1,104 @@
+cat <<E_O_CONFIG >"${xen_guest_config_file}"
+#
+# Configuration file for the Xen instance ${hostname}, created
+# by vm-deploy.sh ${VERSION} on $(date).
+#
+
+#
+# Guest virtualization type
+#
+$(
+if [ "${virt_type}" = "xen-pv" ]; then
+    printf "type        = 'pv'"
+fi
+
+if [ "${virt_type}" = "xen-pvh" ]; then
+    printf "type        = 'pvh'"
+fi
+)
+
+#
+#  Kernel + memory size
+#
+$(
+if [ -n "${kernel}" ] && [ -z "${pygrub}" ]; then
+    printf "kernel      = '${kernel}'\n"
+    printf "extra       = 'elevator=noop'\n"
+fi
+
+if [ -n "${initrd}" ] && [ -z "${pygrub}" ]; then
+    printf "ramdisk     = '${initrd}'"
+fi
+
+if [ "${virt_type}" = "xen-pv" ] && [ -z "${kernel}" ]; then
+    printf "bootloader  = 'pygrub'\n"
+fi
+
+if [ "${virt_type}" = "xen-pvh" ]; then
+    printf "kernel      = '/usr/lib/grub-xen/grub-i386-xen_pvh.bin'\n"
+fi
+)
+
+vcpus       = '${vcpus}'
+memory      = '${memory}'
+$(
+if [ -n "${maxmem}" ]; then
+    printf "maxmem      = '${maxmem}'";
+fi
+)
+
+#
+#  Disk device(s).
+#
+
+#
+#  Physical volumes
+#
+$(
+if [ -n "${kernel}" ] && [ -z "${pygrub}" ]; then
+    printf "root        = '/dev/${device_type}1 ro'\n"
+fi
+
+if [ -n "${image_dev}" ]; then
+    printf "disk        = [\n"
+    printf "                  'phy:${image_dev},${device_type},w',\n"
+    printf "              ]\n"
+fi
+)
+
+#
+#  Hostname
+#
+name        = '${hostname}'
+
+#
+#  Networking
+#
+$(
+if [ -n "${mac}" ]; then
+    m="mac=${mac}"
+fi
+
+if [ -n "${bridge}" ]; then
+    if [ -n "${mac}" ]; then
+        br=",bridge=${bridge}"
+    else
+        br="bridge=${bridge}"
+    fi
+fi
+
+if [ "${dhcp}" = 1 ]; then
+    printf "vif         = [ '${m}${br}' ]"
+elif [ -n "${ip}" ]; then
+    printf "vif         = [ 'ip=${ip},${m}${br}' ]"
+fi
+)
+
+#
+#  Behaviour
+#
+on_poweroff = 'destroy'
+on_reboot   = 'restart'
+on_crash    = 'restart'
+
+E_O_CONFIG

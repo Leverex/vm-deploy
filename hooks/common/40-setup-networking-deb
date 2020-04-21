@@ -1,0 +1,155 @@
+#!/bin/sh
+#
+# Configure networking
+# /etc/network/interface
+#
+
+
+prefix="$1"
+
+
+#
+#  Source our common functions
+#
+
+if [ -e /usr/share/vm-deploy/common.sh ]; then
+    . /usr/share/vm-deploy/common.sh
+else
+    . "${HOOK_DIR}/common.sh"
+fi
+
+
+#
+# Log our start
+#
+log_msg info "Script $0 starting"
+
+
+#
+#  Make sure we have an /etc/network directory.
+#
+mkdir -p "${prefix}/etc/network"
+
+
+#
+#  A function to setup DHCP for our new image.
+#
+setup_dynamic_networking()
+{
+    #
+    # The host is using DHCP.
+    #
+    cat <<E_O_DHCP > ${prefix}/etc/network/interfaces
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+# The primary network interface
+auto eth0
+iface eth0 inet dhcp
+# post-up ethtool -K eth0 tx off
+
+#
+# The commented out line above will disable TCP checksumming which
+# might resolve problems for some users. It is disabled by default
+#
+E_O_DHCP
+}
+
+
+
+#
+#  A function to setup static IP addresses for our new image.
+#
+setup_static_networking()
+{
+    #
+    #  if $ptp is set then add a "pointopoint" setting.
+    #
+    point='';
+    if [ -n "${ptp}" ]; then
+        point=" pointopoint ${ptp}"
+    else
+        point=''
+    fi
+
+    #
+    # broadcast address?
+    #
+    bcast='';
+    if [ -n "${broadcast}" ]; then
+      bcast=" broadcast ${broadcast}"
+    fi
+
+    #
+    # gateway address?
+    #
+    gway='';
+    if [ -n "${gateway}" ]; then
+      gway=" gateway ${gateway}"
+    fi
+
+    #
+    # We have a static IP address
+    #
+    cat <<E_O_STATIC >${prefix}/etc/network/interfaces
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+# The primary network interface
+auto eth0
+iface eth0 inet static
+ address ${ip}
+${gway}
+ netmask ${netmask}
+${bcast}
+${point}
+ # post-up  ethtool -K eth0 tx off
+
+#
+# The commented out line above will disable TCP checksumming which
+# might resolve problems for some users. It is disabled by default
+#
+E_O_STATIC
+
+    #
+    # Hooks are run chrooted, hence the resolv.conf is moved
+    # temporarily to /etc/resolv.conf.old. Use that file, it
+    # will be restored after hooks are run.
+    #
+    if [ "$nameserver" != '' ]; then
+        rm -f "${prefix}/etc/resolv.conf.old"
+        for ns in $nameserver; do
+            printf "nameserver ${ns}\n" >> "${prefix}/etc/resolv.conf.old"
+        done
+    else
+        cp /etc/resolv.conf "${prefix}/etc/resolv.conf.old"
+    fi
+}
+
+
+
+
+#
+#  Call the relevant function
+#
+if [ -n "${ip}" ]; then
+    log_msg info "Setting up static networking"
+    setup_static_networking
+elif [ "${dhcp}" = 1 ]; then
+    log_msg info "Setting up DHCP networking"
+    setup_dynamic_networking
+fi
+
+
+#
+#  Log our finish
+#
+log_msg info "Script $0 finished"

@@ -1,0 +1,37 @@
+#!/bin/sh
+#
+#  Copy some specific files from host nachine into the new images
+#
+
+
+prefix=$1
+
+
+#
+#  Source our common functions
+#
+
+if [ -e /usr/share/vm-deploy/common.sh ]; then
+    . /usr/share/vm-deploy/common.sh
+else
+    . "${HOOK_DIR}/common.sh"
+fi
+
+
+#
+# Log our start
+#
+log_msg "Script $0 starting"
+
+
+#
+# Copy "required" files from our host.
+#
+cp /etc/timezone    ${prefix}/etc
+cp /etc/localtime   ${prefix}/etc
+
+
+#
+#  Log our finish
+#
+log_msg "Script $0 finished"

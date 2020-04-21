@@ -1,0 +1,75 @@
+#!/bin/sh
+#
+#  This script ensures that the new guest images have a nicely
+# populated /dev directory.
+#
+# Steve
+# --
+# https://steve.fi/
+
+
+prefix=$1
+
+
+#
+#  Source our common functions
+#
+
+if [ -e /usr/share/vm-deploy/common.sh ]; then
+    . /usr/share/vm-deploy/common.sh
+else
+    . "${HOOK_DIR}/common.sh"
+fi
+
+
+#
+# Log our start
+#
+log_msg "Script $0 starting"
+
+#
+# Test where MAKEDEV is located, assuming /sbin/ as default
+#
+MAKEDEV=''
+MAKEDEV_PATHS="/sbin/MAKEDEV /dev/MAKEDEV"
+for MAKEDEV_PATH in ${MAKEDEV_PATHS}; do
+    if [ -x "${prefix}${MAKEDEV_PATH}" ]; then
+    MAKEDEV="${prefix}${MAKEDEV_PATH}"
+    break
+    fi
+done
+
+if [ -n "${MAKEDEV}" ]; then
+
+#
+# Early termination if we have a couple of common devices present
+# should speed up installs which use --copy/--tar
+#
+if ( test `ls -1 ${prefix}/dev | wc -l` -gt 10 ); then
+    #
+    # We still need to make sure the basic devices are present
+    #
+    cd ${prefix}/dev
+    ${MAKEDEV} std
+    ${MAKEDEV} hda
+    ${MAKEDEV} sda
+    ${MAKEDEV} tty1
+
+    log_msg warn "Terminating because there appear to be files in /dev already"
+    exit
+fi
+
+
+#
+#  Make the device nodes.
+#
+cd ${prefix}/dev
+${MAKEDEV} generic
+${MAKEDEV} std
+
+fi # -n ${MAKEDEV}
+
+#
+#  Log our finish
+#
+log_msg info "Script $0 finished"

@@ -1,0 +1,65 @@
+#!/bin/sh
+#
+#  Ensure that either modules-init-tools or kmod is setup.
+#
+#  This is most likely required if you're using a custom kernel
+# for your Xen system.  But even if it isn't required it can't
+# really do anything bad; just waste a bit of space.
+
+
+prefix="$1"
+
+
+#
+#  Source our common functions
+#
+
+if [ -e /usr/share/vm-deploy/common.sh ]; then
+    . /usr/share/vm-deploy/common.sh
+else
+    . "${HOOK_DIR}/common.sh"
+fi
+
+
+#
+# Log our start
+#
+log_msg info "Script $0 starting"
+
+if [ "${virt_type}" = "generic" ] || \
+   [ "${virt_type}" = "kvm" ]; then
+
+    #
+    # Install grub2
+    #
+    install_debian_package "${prefix}" grub-pc
+
+    printf "(hd0) ${image_dev}" > "${prefix}/boot/grub/device.map"
+
+    mount -o bind /dev "${prefix}/dev"
+    mount sys -t sysfs "${prefix}/sys"
+    mount proc -t proc "${prefix}/proc"
+    mount devpts -t devpts -o noexec,nosuid,gid=5,mode=620 "${prefix}/dev/pts"
+
+    chroot "${prefix}" /usr/sbin/grub-mkconfig -o /boot/grub/grub.cfg
+    chroot "${prefix}" /usr/sbin/grub-install "${image_dev}"
+
+    rm -f "${prefix}/boot/grub/device.map"
+
+elif [ "${virt_type}" = "xen-pvh" ]; then
+
+    mkdir -p "${prefix}/boot/grub"
+
+    cat <<E_O_GRUBCFG > "${prefix}/boot/grub/grub.cfg"
+root='(xen/xvda,msdos1)'
+linux /vmlinuz root=/dev/xvda1 ro console=hvc0
+initrd /initrd.img
+boot
+E_O_GRUBCFG
+
+fi
+
+#
+#  Log our finish
+#
+log_msg info "Script $0 finished"

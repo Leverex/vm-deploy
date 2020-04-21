@@ -1,0 +1,39 @@
+#!/bin/sh
+#
+#  This script disables the hardware clock.
+#
+# Steve
+# --
+# https://steve.fi/
+
+
+prefix=$1
+
+
+#
+#  Source our common functions
+#
+
+if [ -e /usr/share/vm-deploy/common.sh ]; then
+    . /usr/share/vm-deploy/common.sh
+else
+    . "${HOOK_DIR}/common.sh"
+fi
+
+
+#
+# Log our start
+#
+log_msg info "Script $0 starting"
+
+
+#
+#  Disable the startup scripts from all runlevels.
+#
+chroot ${prefix} /usr/sbin/update-rc.d -f hwclock.sh remove
+
+#
+# Log our finish
+#
+log_msg info "Script $0 finished."
+

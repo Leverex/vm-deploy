@@ -1,0 +1,50 @@
+#!/bin/sh
+#
+#  Copy files from a 'skel' directory, if present, into the
+# new images
+#
+
+
+prefix=$1
+
+
+#
+#  Source our common functions
+#
+
+if [ -e /usr/share/vm-deploy/common.sh ]; then
+    . /usr/share/vm-deploy/common.sh
+else
+    . "${HOOK_DIR}/common.sh"
+fi
+
+
+#
+# Log our start
+#
+log_msg "Script $0 starting"
+
+
+#
+#  Copy everything from the skel directory into the new instance
+# if that directory exists.
+#
+if [ -d ./skel ]; then
+
+    log_msg info "Copying files from ./skel"
+
+    (cd ./skel; tar -cf - . ) | (cd ${prefix}/; tar -xpf -)
+
+    log_msg info "Finished"
+
+else
+
+    log_msg info "skel directory, ./skel, not present ignoring."
+
+fi
+
+
+#
+#  Log our finish
+#
+log_msg info "Script $0 finished"

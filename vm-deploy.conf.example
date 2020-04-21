@@ -1,0 +1,55 @@
+# This is an example configuration file
+
+# Virtualization type (generic, kvm, xen-pv, xen-pvh)
+virt_type=kvm
+
+# Disk device type (hda, sda, vda, xvda)
+# for optimal performance, choose vda for KVM or xvda for Xen.
+device_type=vda
+
+# Installation method (currently only debootstrap is supported)
+install_method=debootstrap
+
+# Set the mirror to use when installing via debootstrap
+mirror=http://ftp.us.debian.org/debian/
+
+# Specify the Debian distribution to install
+dist=stable
+
+# Pass the given architecture to debootstrap
+arch=amd64
+
+# Specify a custom debootstrap command
+# debootstrap_cmd="/usr/sbin/debootstrap --variant=minbase"
+debootstrap_cmd="/usr/sbin/debootstrap"
+
+# Comma-separated list of additional packages to be included
+add_packages="apt-utils,cron,ifupdown,init,iputils-ping,kmod,less,logrotate,nano,netbase,procps,whiptail,rsyslog,linux-image-cloud-amd64,locales,wget,ca-certificates,apt-listchanges"
+
+# Disk and sizing
+size=5G            # root disk size, suffix (M, G) required
+fs=ext4            # default filesystem
+memory=256         # memory size, suffix (M, G) optional
+
+# Networking options
+#
+# Adjust these network settings if you wish to give your
+# new instances static IP addresses.
+#
+# gateway=192.168.1.1
+# netmask=255.255.255.0
+# broadcast=192.168.1.255
+#
+# Uncomment to use dynamic networking
+# dhcp=1
+#
+# Adjust this setting if you wish to give your new instances
+# a specific nameserver.
+#
+# By default, nameserver is not set, and /etc/resolv.conf
+# will be copied to the guest.
+# nameserver="192.168.1.253 192.168.254"
+
+# Don't touch /etc/hosts on the virtualization host
+nohosts=1
+

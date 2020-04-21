@@ -1,0 +1,46 @@
+#!/bin/sh
+#
+#  This script removes the file which prevents daemons from running.
+#
+# Steve
+# --
+# https://steve.fi/
+
+
+
+prefix=$1
+
+
+#
+#  Source our common functions
+#
+
+if [ -e /usr/share/vm-deploy/common.sh ]; then
+    . /usr/share/vm-deploy/common.sh
+else
+    . "${HOOK_DIR}/common.sh"
+fi
+
+
+#
+# Log our start
+#
+log_msg info "Script $0 starting"
+
+
+#
+#  Remove the script if present.
+#
+if [ -x "${prefix}/usr/sbin/policy-rc.d" ]; then
+
+    rm -f "${prefix}/usr/sbin/policy-rc.d"
+
+    log_msg info "Removed: ${prefix}/usr/sbin/policy-rc.d"
+
+fi
+
+
+#
+# Log our finish
+#
+log_msg info "Script $0 finished"

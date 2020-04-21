@@ -1,0 +1,56 @@
+#!/bin/sh
+#
+#  Ensure that either modules-init-tools or kmod is setup.
+#
+#  This is most likely required if you're using a custom kernel
+# for your Xen system.  But even if it isn't required it can't
+# really do anything bad; just waste a bit of space.
+
+
+prefix="$1"
+
+
+#
+#  Source our common functions
+#
+
+if [ -e /usr/share/vm-deploy/common.sh ]; then
+    . /usr/share/vm-deploy/common.sh
+else
+    . "${HOOK_DIR}/common.sh"
+fi
+
+
+#
+# Log our start
+#
+log_msg info "Script $0 starting"
+
+if [ "${virt_type}" = "xen-pv" ] && [ -z "${kernel}" ]; then
+    pygrub=1
+fi
+
+if [ "${pygrub}" = "1" ]; then
+
+#
+#  Install the grub 0.9x package ("grub-legacy" on Debian, "grub" on Ubuntu)
+#
+if chroot "${prefix}" /usr/bin/apt-cache show grub-legacy 2>/dev/null | egrep -qi 'GRand Unified Bootloader.*Legacy'; then
+    install_debian_package "${prefix}" grub-legacy
+else
+    install_debian_package "${prefix}" grub
+fi
+
+if [ ! -e ${prefix}/boot/grub/default ]; then
+    echo default > "${prefix}/boot/grub/default"
+fi
+chroot "${prefix}" /usr/sbin/update-grub
+
+else
+    log_msg info "pygrub not set, skipping grub-legacy installation"
+fi # if pygrub
+
+#
+#  Log our finish
+#
+log_msg info "Script $0 finished"

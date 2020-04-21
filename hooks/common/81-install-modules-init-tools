@@ -1,0 +1,44 @@
+#!/bin/sh
+#
+#  Ensure that either modules-init-tools or kmod is setup.
+#
+#  This is required in most setups.  But even if it isn't required it
+# can't really do anything bad; just waste a bit of space.
+#
+
+prefix=$1
+
+
+#
+#  Source our common functions
+#
+
+if [ -e /usr/share/vm-deploy/common.sh ]; then
+    . /usr/share/vm-deploy/common.sh
+else
+    . "${HOOK_DIR}/common.sh"
+fi
+
+
+#
+# Log our start
+#
+log_msg info "Script $0 starting"
+
+#
+#  Install either kmod or module-init-tools package.
+#
+if chroot "${prefix}" /usr/bin/apt-cache show module-init-tools >/dev/null 2>/dev/null; then
+    if chroot "${prefix}" /usr/bin/apt-cache show module-init-tools | fgrep -qi transitional; then
+        install_debian_package "${prefix}" kmod
+    else
+        install_debian_package "${prefix}" module-init-tools
+    fi
+else
+    install_debian_package "${prefix}" kmod
+fi
+
+#
+#  Log our finish
+#
+log_msg info "Script $0 finished"

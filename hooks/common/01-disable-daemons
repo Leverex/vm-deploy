@@ -1,0 +1,54 @@
+#!/bin/sh
+#
+#  This script ensures that daemons will not be started inside our
+# chroot() installation.
+#
+# Steve
+# --
+# https://steve.fi/
+
+
+prefix=$1
+
+
+#
+#  Source our common functions
+#
+
+if [ -e /usr/share/vm-deploy/common.sh ]; then
+    . /usr/share/vm-deploy/common.sh
+else
+    . "${HOOK_DIR}/common.sh"
+fi
+
+
+#
+# Log our start
+#
+log_msg info "Script $0 starting"
+
+
+#
+#  Make sure we have a directory.
+#
+if [ ! -d "${prefix}/usr/sbin" ]; then
+
+    mkdir -p "${prefix}/usr/sbin"
+
+    log_msg info "created missing directory: ${prefix}/usr/sbin"
+fi
+
+
+#
+#  Add the script.
+#
+echo '#!/bin/sh' >  ${prefix}/usr/sbin/policy-rc.d
+echo 'exit 101'  >> ${prefix}/usr/sbin/policy-rc.d
+chmod 755           ${prefix}/usr/sbin/policy-rc.d
+
+
+
+#
+# Log our finish
+#
+log_msg info "Script $0 finished."

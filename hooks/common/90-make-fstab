@@ -1,0 +1,52 @@
+#!/bin/sh
+#
+#  This script is responsible for setting up /etc/fstab upon the
+# new instance.
+#
+#  This should be a simple job, but it is complicated by some of the
+# differences between filesystems - some root filesystems will require
+# the installation of new packages, and we have to handle that here.
+#
+# Steve
+# --
+# https://steve.fi/
+
+
+prefix="$1"
+
+
+#
+#  Source our common functions
+#
+
+if [ -e /usr/share/vm-deploy/common.sh ]; then
+    . /usr/share/vm-deploy/common.sh
+else
+    . "${HOOK_DIR}/common.sh"
+fi
+
+
+#
+# Log our start
+#
+log_msg info "Script $0 starting"
+
+log_msg info "Filesystem options are ${options}"
+
+log_msg info "Root device is /dev/${device_type}"
+
+#
+# Create the fstab.
+#
+cat <<E_O_FSTAB > "${prefix}/etc/fstab"
+# /etc/fstab: static file system information.
+#
+# <file system> <mount point>   <type>  <options>       <dump>  <pass>
+E_O_FSTAB
+
+echo "/dev/${device_type}1 / ${fs} noatime,errors=remount-ro 0 1" >> "${prefix}/etc/fstab"
+
+#
+#  Log our finish
+#
+log_msg info "Script $0 finished"

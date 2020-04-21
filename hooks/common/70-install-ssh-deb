@@ -1,0 +1,83 @@
+#!/bin/sh
+#
+#  This script installs OpenSSH Server on the newly created guest.
+#
+#  It does this by generating the keys within the host, since guests
+# do not have the necessary /dev/random and /dev/urandom to generate
+# their own keys before boot.
+#
+# Dmitry Nedospasov
+# --
+# http://www.nedos.net/
+
+prefix=$1
+
+
+#
+#  Source our common functions
+#
+
+if [ -e /usr/share/vm-deploy/common.sh ]; then
+    . /usr/share/vm-deploy/common.sh
+else
+    . "${HOOK_DIR}/common.sh"
+fi
+
+
+#
+# Log our start
+#
+log_msg info "Script $0 starting"
+
+#
+#  Since our guests doesn't have an RNG, generate the keys from the host
+#
+#  First, create an ssh directory
+#
+mkdir -p "${prefix}/etc/ssh"
+
+#
+#  Generate the Host RSA Key
+#
+if [ ! -f "${prefix}/etc/ssh/ssh_host_rsa_key" ]; then
+if ssh-keygen -t rsa -N "" -f "${prefix}/etc/ssh/ssh_host_rsa_key" -C "root@${hostname}"; then
+    log_msg info "successfully generated RSA host key"
+else
+    log_msg err "failed to generate RSA host key"
+fi
+fi
+
+#
+#  Generate the Host ED25519 Key
+#
+if [ ! -f "${prefix}/etc/ssh/ssh_host_ed25519_key" ]; then
+if ssh-keygen -t ed25519 -N "" -f "${prefix}/etc/ssh/ssh_host_ed25519_key" -C "root@${hostname}"; then
+    log_msg info "successfully generated ED25519 host key"
+else
+    log_msg err "failed to generate ED25519 host key"
+fi
+fi
+
+#
+#  Prevent creation of ECDSA Key
+#
+if [ ! -f "${prefix}/etc/ssh/ssh_host_ecdsa_key" ]; then
+    (umask 077; touch "${prefix}/etc/ssh/ssh_host_ecdsa_key")
+fi
+
+#
+#  Install ssh
+#
+install_debian_package "${prefix}" openssh-server
+
+#
+# Enable the session cleanup service
+#
+cp -av "${prefix}/usr/share/doc/openssh-client/examples/ssh-session-cleanup.service" "${prefix}/etc/systemd/system/"
+chroot "${prefix}" systemctl enable ssh-session-cleanup.service
+
+
+#
+# Log our finish
+#
+log_msg info "Script $0 finished"

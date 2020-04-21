@@ -1,0 +1,48 @@
+#!/bin/sh
+#
+#  This script ensures the new image has locales setup correctly.
+#
+# Steve
+# --
+# https://steve.fi/
+
+prefix=$1
+
+
+#
+#  Source our common functions
+#
+
+if [ -e /usr/share/vm-deploy/common.sh ]; then
+    . /usr/share/vm-deploy/common.sh
+else
+    . "${HOOK_DIR}/common.sh"
+fi
+
+
+#
+# Log our start
+#
+log_msg info "Script $0 starting"
+
+
+#
+# Default to the same locale as the host.
+#
+if [ -e /etc/locale.gen ]; then
+   cp /etc/locale.gen ${prefix}/etc
+fi
+
+#
+#  Install the package
+#
+install_debian_package ${prefix} locales
+#install_debian_package ${prefix} util-linux-locales
+chroot ${prefix} /usr/sbin/locale-gen
+chroot ${prefix} /usr/sbin/update-locale LANG=C
+
+
+#
+# Log our finish
+#
+log_msg info "Script $0 finished."

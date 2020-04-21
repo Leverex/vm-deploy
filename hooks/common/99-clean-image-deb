@@ -1,0 +1,39 @@
+#!/bin/sh
+#
+#  This script cleans the newly created image's apt-get archive.
+#
+# Steve
+# --
+# https://steve.fi/
+
+
+prefix=$1
+
+
+#
+#  Source our common functions
+#
+
+if [ -e /usr/share/vm-deploy/common.sh ]; then
+    . /usr/share/vm-deploy/common.sh
+else
+    . "${HOOK_DIR}/common.sh"
+fi
+
+
+#
+# Log our start
+#
+log_msg info "Script $0 starting"
+
+
+#
+#  Clean the APT package cache for Debian GNU/Linux.
+#
+chroot ${prefix} /usr/bin/apt-get clean
+
+
+#
+#  Log our finish
+#
+log_msg info "Script $0 finished"
